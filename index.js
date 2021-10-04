@@ -10,11 +10,11 @@ const {
   checkIfBlockArrayIsFull,
   getBlocksFromDB,
   truncateTable,
+
 } = require('./utils/helpers');
 
 let blocks = [];
 function detectWallet(number) {
-  // return new Promise((resolve, reject) => {
   const getSpecifiedAmountOfBlocks = setInterval(() => {
     getBlocks(blocks);
     logBlocks(axiosGetBlock, blocks);
@@ -31,8 +31,6 @@ function detectWallet(number) {
       blocks = [];
     }
   }, 2000);
-  //   resolve();
-  // });
 }
 
 const port = process.env.PORT;
