@@ -1,5 +1,5 @@
 const mysql = require("mysql");
-const mariadb = require("mariadb");
+
 const databaseConfig = require("../config/db.config.js");
 //Set up connection with database
 
