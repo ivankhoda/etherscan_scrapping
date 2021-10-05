@@ -62,21 +62,19 @@ function insertBlocksToDb(element) {
     if (err) {
       return console.error(err.message);
     }
-    console.log(`Row inserted:${results.affectedRows}`);
+    console.log(`Row of block inserted:${results.affectedRows}`);
   });
 }
 
-function getBlocksFromDB(amount) {
+function getBlocksFromDB() {
+  let blocksFromDb = [];
   databaseConnection.query(
-    `SELECT *,  ROW_NUMBER() OVER (order BY tag ) AS num FROM blocks ORDER BY num DESC LIMIT ${amount}`,
+    'SELECT * FROM blocks',
     (err, rows) => {
       if (err) throw err;
-      let blocksFromDb = [];
-
       blocksFromDb = Object.values(JSON.parse(JSON.stringify(rows)));
+      console.log(blocksFromDb.length);
       getTransactionsForEachBlock(blocksFromDb);
-
-      return blocksFromDb;
     },
   );
 }
@@ -89,11 +87,21 @@ async function getTransactions(blockTag) {
 }
 // Get transactions from each block
 function getTransactionsForEachBlock(arr) {
-  const transactionsArray = [];
   arr.forEach((element) => {
+    console.log(element, 'tag');
     getTransactions(element.tag).then((data) => {
-      transactionsArray.push(data.result.transactions);
-      insertBatchTransactionsToDb(transactionsArray);
+      if (data.result.transactions !== undefined) {
+        data.result.transactions.forEach((transaction) => {
+          insertTransactionToDb([
+            transaction.hash,
+            transaction.from,
+            transaction.to,
+            transactionValueToDecimal(transaction.value),
+          ]);
+        });
+      } else {
+        console.log(data.result.transaction, 'Undefined? transacio');
+      }
     });
   });
 }
@@ -118,31 +126,19 @@ function insertTransactionToDb(element) {
     if (err) {
       return err.message;
     }
-    return (`Row inserted:${results.affectedRows}`);
+    console.log(`Row of transaction inserted:${results.affectedRows}`);
   });
 }
-// Insert batch of transactions
-function insertBatchTransactionsToDb(arr) {
-  arr.forEach((element) => {
-    element.forEach((transaction) => {
-      insertTransactionToDb([
-        transaction.hash,
-        transaction.from,
-        transaction.to,
-        transactionValueToDecimal(transaction.value),
-      ]);
-    });
-  });
-}
+
 // Get highest income wallet number
 function getHighestIncomeWalletNumber() {
-  const queryToGetHighestIncomeWallet = 'SELECT ROW_NUMBER() OVER (order BY hash ) as num, to_whom, SUM(value) AS Total_Income FROM transactions GROUP BY to_whom ORDER BY Total_Income DESC LIMIT 1;';
-  databaseConnection.query(queryToGetHighestIncomeWallet, (err, rows) => {
-    if (err) throw err;
-    const result = Object.values(JSON.parse(JSON.stringify(rows)));
+  return new Promise((resolve, reject) => {
+    const queryToGetHighestIncomeWallet = 'SELECT ROW_NUMBER() OVER (order BY hash ) as num, to_whom, SUM(value) AS Total_Income FROM transactions GROUP BY to_whom ORDER BY Total_Income DESC LIMIT 1;';
+    databaseConnection.query(queryToGetHighestIncomeWallet, (err, rows) => {
+      if (err) throw reject(err);
 
-    console.log(result, 'row from helpers');
-    return result;
+      resolve(rows);
+    });
   });
 }
 
@@ -162,7 +158,6 @@ module.exports = {
   getBlocksFromDB,
   getTransactions,
   insertTransactionToDb,
-  insertBatchTransactionsToDb,
   getHighestIncomeWalletNumber,
   truncateTable,
 };
