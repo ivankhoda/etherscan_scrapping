@@ -44,28 +44,31 @@ async function getTheHigherIncomeWalletDatabaseRecord() {
 const port = process.env.PORT;
 // Set up server
 const server = http.createServer((req, res) => {
-  const requestUrl = req.url;
-  const numberOfBlocksToGetTransactions = Number(requestUrl.split('/transactions/').slice(1));
+  if (req.method === 'GET') {
+    const requestUrl = req.url;
+    const numberOfBlocksToGetTransactions = Number(requestUrl.split('/transactions/').slice(1));
 
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/html');
-  truncateTable('blocks');
-  truncateTable('transactions');
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/html');
+    truncateTable('blocks');
+    truncateTable('transactions');
 
-  detectWallet(numberOfBlocksToGetTransactions);
-  setTimeout(() => {
-    let wallet;
-    getTheHigherIncomeWalletDatabaseRecord()
-      .then((obj) => {
-        wallet = obj;
+    detectWallet(numberOfBlocksToGetTransactions);
+    setTimeout(() => {
+      let wallet;
+      getTheHigherIncomeWalletDatabaseRecord()
+        .then((obj) => {
+          wallet = obj;
 
-        res.end(
-          `<h1>Welcome to Etherscan data scrapping. 
+          res.end(
+            `<h1>Welcome to Etherscan data scrapping. 
           From ${numberOfBlocksToGetTransactions} blocks there is a biggest income wallet with ${wallet.to_whom} number and with ${wallet.Total_Income} ETH</h1>`,
-        );
-      });
-  }, 23000 * numberOfBlocksToGetTransactions);
+          );
+        });
+    }, 23000 * numberOfBlocksToGetTransactions);
+  }
 });
+
 // Check if server is working
 server.listen(port, () => {
   console.log(`Server running at port ${port}`);
