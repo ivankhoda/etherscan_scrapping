@@ -142,11 +142,6 @@ function getHighestIncomeWalletNumber() {
   });
 }
 
-// Function to filter transactions which are having 0 value
-// function filterTransactions(arr, valueToFilter) {
-//   return arr.filter((element) => element.value !== valueToFilter);
-// }
-
 module.exports = {
   logBlocks,
   blockIsUnique,
